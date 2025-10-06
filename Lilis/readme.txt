@@ -11,9 +11,7 @@ El motor de base de datos utilizado es MySQL corriendo desde WampServer.
 5. python manage.py runserver
 
 ## Cómo cargar semillas
-Opción A (fixtures):
 python manage.py loaddata fixtures/00_categories.json
-python manage.py loaddata fixtures/01_roles.json
 python manage.py loaddata fixtures/02_products.json
 
 ## Admin de prueba
@@ -22,4 +20,4 @@ Clave: vic
 
 ## Rama para el avance
 u2-c2-admin-basico
-https://github.com/Alkr4/Dulces_cosas/tree/u2-c2-admin-basico
+https://github.com/imVic-Byte/ProjectLilis/tree/u2-c2-admin-basico
