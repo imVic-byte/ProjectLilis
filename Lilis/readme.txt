@@ -4,7 +4,7 @@
 El motor de base de datos utilizado es MySQL corriendo desde WampServer.
 
 ## Cómo correr
-1. pip install django pymysql python-dotenv cryptography
+1. pip install django pymysql python-dotenv cryptography django-crispy-forms crispy-bootstrap5
 2. Crear base de datos 'lilis' en MySQL y configurar el archivo .env
 3. python manage.py migrate
 4. python manage.py createsuperuser
