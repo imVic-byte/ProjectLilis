@@ -35,7 +35,7 @@ class Product(models.Model):
     max_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     current_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     expiration_date = models.DateField(blank=True, null=True)
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateField(auto_now_add=True, null=True)
 
     def __str__(self):
         return f'{self.name} - {self.sku}'

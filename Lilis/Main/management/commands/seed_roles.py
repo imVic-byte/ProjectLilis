@@ -115,12 +115,18 @@ class Command(BaseCommand):
         # 2) Roles (Group + Role 1:1)
         groups_roles = {}
         for r in ROLES:
-            g, _ = Group.objects.update_or_create(name=r['name'])
-            role, _ = Role.objects.update_or_create(
-                group=g,
-                defaults={"description": r["description"]}
-            )
-            groups_roles[r['name']] = (g, role)
+            if r['name'] is None:
+                continue
+            else:
+                g, _ = Group.objects.update_or_create(name=r['name'])
+                role, _ = Role.objects.update_or_create(
+                    group=g,
+                    
+                    defaults={
+                        "name": r["name"],
+                        "description": r["description"]}
+                )
+                groups_roles[r['name']] = (g, role)
 
         # 3) Aplicar matriz + sincronizar permisos nativos (Admin)
         for rname, modmap in MATRIX.items():
@@ -142,7 +148,7 @@ class Command(BaseCommand):
                     defaults={
                         "can_view":   "view" in acts,
                         "can_add":    "add" in acts,
-                        "can_change": "change" in acts,
+                        "can_edit": "change" in acts,
                         "can_delete": "delete" in acts,
                     }
                 )
