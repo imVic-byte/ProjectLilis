@@ -57,3 +57,44 @@ def product_delete(request, id):
                 return redirect('products_list')
         return redirect('products_list') 
 
+@login_required
+def rawmaterial_list(request):
+    rawmaterials = raw_material_service.list()
+    return render(request, 'main/rawmaterial_list.html',{'rawmaterials':rawmaterials})
+
+@login_required
+def rawmaterial_view(request, id):
+    rawmaterial = raw_material_service.get(id)
+    return render(request, 'main/rawmaterial.html', {'rawmaterial':rawmaterial})
+
+@login_required
+def rawmaterial_create(request):
+    if request.method == 'POST':
+        success, form = raw_material_service.save(request.POST)
+        if success:
+            return redirect('rawmaterial_list')
+        else:
+            print(form.errors)
+    else:
+        form = raw_material_service.form_class()
+    return render(request, 'main/rawmaterial_create.html', {'form':form})
+
+@login_required
+def rawmaterial_update(request,id):
+    if request.method == 'POST':
+        success, form = raw_material_service.update(id, request.POST)
+        if success:
+            return redirect('rawmaterial_list')
+    else:
+        rawmaterial = raw_material_service.get(id)
+        form = raw_material_service.form_class(instance=rawmaterial)
+    return render(request,'main/rawmaterial_update.html',{'form':form})
+
+@login_required
+def rawmaterial_delete(request,id):
+    if request.method == 'GET':
+        success = raw_material_service.delete(id)
+        if success:
+            return redirect('rawmaterial_list')
+    return redirect('rawmaterial_list')
+        

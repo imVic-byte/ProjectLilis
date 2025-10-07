@@ -8,4 +8,9 @@ urlpatterns = [
     path('product_create' , views.product_create ,name='product_create'),
     path('product_delete<int:id>' , views.product_delete ,name='product_delete'),
     path('product_update<int:id>' , views.product_update ,name='product_update'),
+    path('rawmaterial_list', views.rawmaterial_list, name='rawmaterial_list'),
+    path('rawmaterial_view<int:id>/', views.rawmaterial_view, name='rawmaterial_view'),
+    path('rawmaterial_create', views.rawmaterial_create, name='rawmaterial_create'),
+    path('rawmaterial_update', views.rawmaterial_update, name='rawmaterial_update'),
+    path('rawmaterial_delete<int:id>/', views.rawmaterial_delete, name='rawmaterial_delete'),
 ]
