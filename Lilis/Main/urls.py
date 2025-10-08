@@ -11,6 +11,6 @@ urlpatterns = [
     path('rawmaterial_list', views.rawmaterial_list, name='rawmaterial_list'),
     path('rawmaterial_view<int:id>/', views.rawmaterial_view, name='rawmaterial_view'),
     path('rawmaterial_create', views.rawmaterial_create, name='rawmaterial_create'),
-    path('rawmaterial_update', views.rawmaterial_update, name='rawmaterial_update'),
+    path('rawmaterial_update<int:id>', views.rawmaterial_update, name='rawmaterial_update'),
     path('rawmaterial_delete<int:id>/', views.rawmaterial_delete, name='rawmaterial_delete'),
 ]

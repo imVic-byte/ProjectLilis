@@ -42,3 +42,6 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.run}"
     
+    def get_staff(self):
+        return f'{self.user.is_staff}'
+    

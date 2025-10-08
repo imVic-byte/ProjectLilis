@@ -2,6 +2,7 @@ from django.contrib import admin
 from Products.models import Product, Category, Supplier, RawMaterial, RawSupplier, PriceHistories
 from Accounts.models import Profile, Role, RoleModulePermission
 from Sells.models import Client, Location, Warehouse
+from Products.forms import ProductForm
 
 def makeActive(modeladmin, request, queryset):
     queryset.update(is_active=True)
@@ -19,6 +20,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductForm
     list_display = ('id', 'name', 'sku', 'category', 'current_stock', 'min_stock', 'max_stock')
     search_fields = ('name', 'sku')
     list_filter = ('category',)
@@ -49,7 +51,7 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'run', 'phone', 'role')
+    list_display = ('user', 'run', 'phone', 'role','get_staff')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'run', 'phone', 'role__name')
     list_filter = ('role',)
     ordering = ('user__username',)

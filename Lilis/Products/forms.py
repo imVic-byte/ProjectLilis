@@ -5,11 +5,11 @@ from Products.models import Product, Category, Supplier, RawMaterial, RawSupplie
 class ProductForm(forms.ModelForm):
     expiration_date = forms.DateField(
         required=False,
-        input_formats=['%d-%m-%Y'],  # formato dd-mm-yyyy
+        input_formats=['%d/%m/%Y'],  # formato dd-mm-yyyy
         widget=forms.DateInput(
             attrs={
                 'type': 'text',           # text para poder escribir dd-mm-yyyy
-                'placeholder': 'dd-mm-yyyy',
+                'placeholder': 'dd/mm/yyyy',
                 'class': 'form-control'
             }
         )
