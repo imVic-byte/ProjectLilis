@@ -5,7 +5,15 @@ from Sells.models import Client, Location, Warehouse
 from Products.forms import ProductForm
 
 def makeActive(modeladmin, request, queryset):
-    queryset.update(is_active=True)
+    for profile in queryset:
+        profile.user.is_active = True
+        profile.user.save()
+
+def makeInactive(modeladmin, request, queryset):
+    for profile in queryset:
+        profile.user.is_active = False
+        profile.user.save()
+
 class ProductInline(admin.TabularInline):
     model = Product
     extra = 0
@@ -56,7 +64,7 @@ class ProfileAdmin(admin.ModelAdmin):
     list_filter = ('role',)
     ordering = ('user__username',)
     list_select_related = ('user', 'role')
-    actions = [makeActive]
+    actions = [makeActive, makeInactive]
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
