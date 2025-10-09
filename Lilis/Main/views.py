@@ -98,3 +98,50 @@ def rawmaterial_delete(request,id):
             return redirect('rawmaterial_list')
     return redirect('rawmaterial_list')
         
+
+#----------------- PROVEEDORES -----------------
+
+@login_required
+def supplier_list(request):
+    suppliers = supplier_service.list()
+    return render(request, 'main/supplier_list.html', {'suppliers': suppliers})
+
+@login_required
+def supplier_view(request, id):
+    supplier = supplier_service.get(id)
+    return render(request, 'main/supplier.html', {'supplier':supplier})
+
+@login_required
+def supplier_create(request):
+    print("REQUEST METHOD:", request.method)
+    if request.method == 'POST':
+        print("ENTRÓ EN POST")
+        success, form = supplier_service.save(request.POST)
+        if success:
+            return redirect('supplier_list')
+        else:
+            print(form.errors)
+    else:
+        form = supplier_service.form_class()
+    
+    return render(request, 'main/supplier_create.html', {'form': form})
+
+@login_required
+def supplier_update(request, id):
+    if request.method == 'POST':
+        success, form = supplier_service.update(id, request.POST)
+        if success:
+            return redirect('supplier_list')
+    else:
+        supplier = supplier_service.get(id)
+        form = supplier_service.form_class(instance=supplier)
+    
+    return render(request, 'main/supplier_update.html', {'form': form})
+
+@login_required
+def supplier_delete(request, id):
+    if request.method == 'GET':
+        success = supplier_service.delete(id)
+        if success:
+            return redirect('supplier_list')
+    return redirect('supplier_list')
