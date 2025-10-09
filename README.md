@@ -29,47 +29,9 @@ https://github.com/imVic-Byte/ProjectLilis/tree/u2-c2-admin-basico
 
 
 
-DJANGO_SECRET_KEY = supersecret
-DJANGO_DEBUG = True
-DB_NAME = Lilis
-DB_USER = LilisAdmin
-DB_PASSWORD = Admin123
-DB_HOST = localhost
-DB_PORT = 3307
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-DJANGO_SECRET_KEY = supersecret
-DJANGO_DEBUG = True
-DB_NAME = Lilis
-DB_USER = LilisAdmin
-DB_PASSWORD = Admin123
-DB_HOST = localhost
-DB_PORT = 3307
