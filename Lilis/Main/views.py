@@ -69,15 +69,26 @@ def rawmaterial_view(request, id):
 
 @login_required
 def rawmaterial_create(request):
+    raw_material_form = raw_material_service.form_class()
+    raw_supplier_form = raw_supplier_service.form_class()
+    prices_form = raw_supplier_service.prices_form_class()
     if request.method == 'POST':
-        success, form = raw_material_service.save(request.POST)
+        success, raw_material_obj = raw_material_service.save(request.POST)
         if success:
-            return redirect('rawmaterial_list')
+            success2, raw_supplier_obj = raw_supplier_service.create_raw_supplier(request.POST)
+            if success2:
+                raw_supplier_obj.fk_raw_material = raw_material_obj
+                raw_supplier_obj.save()
+                success3, prices_obj = raw_supplier_service.save_prices(raw_supplier_obj, request.POST.get('price'), request.POST.get('date'))
+                if success3:
+                    return redirect('rawmaterial_list')
+                else:
+                    print(prices_obj.errors)
+            else:
+                print(raw_supplier_obj.errors)
         else:
-            print(form.errors)
-    else:
-        form = raw_material_service.form_class()
-    return render(request, 'main/rawmaterial_create.html', {'form':form})
+            print(raw_material_obj.errors)
+    return render(request, 'main/rawmaterial_create.html', {'form':raw_material_form, 'raw_supplier_form':raw_supplier_form, 'prices_form':prices_form})
 
 @login_required
 def rawmaterial_update(request,id):

@@ -42,13 +42,13 @@ class Product(models.Model):
     
 class RawSupplier(models.Model):
     fk_supplier = models.ForeignKey("Supplier", on_delete=models.PROTECT, related_name="raw_suppliers")
-    fk_raw_material = models.ForeignKey("RawMaterial", on_delete=models.PROTECT, related_name="raw_materials")
+    fk_raw_material = models.ForeignKey("RawMaterial", on_delete=models.PROTECT, related_name="raw_materials", null=True)
 
     def __str__(self):
         return f'{self.fk_supplier} - {self.fk_raw_material}'
 
 class PriceHistories(models.Model):
-    fk_raw_supplier = models.ForeignKey("RawSupplier", on_delete=models.PROTECT, related_name="price_histories")
+    fk_raw_supplier = models.ForeignKey("RawSupplier", on_delete=models.PROTECT, related_name="price_histories", null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
 

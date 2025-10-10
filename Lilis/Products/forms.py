@@ -78,7 +78,10 @@ class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['name', 'description']
-
+        labels = {
+            'name': 'Nombre',
+            'description': 'Descripción'
+        }
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if not name:
@@ -103,7 +106,14 @@ class BatchForm(forms.ModelForm):
     class Meta:
         model = Batch
         fields = ['product', 'raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
-
+        label = {
+            'product': 'Producto',
+            'raw_material': 'Material',
+            'batch_code': 'Codigo de lote',
+            'expiration_date': 'Fecha de vencimiento',
+            'initial_quantity': 'Cantidad inicial',
+            'current_quantity': 'Cantidad actual',
+        }
     def clean_batch_code(self):
         batch_code = self.cleaned_data.get('batch_code')
         if not batch_code:
@@ -149,7 +159,13 @@ class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
         fields = ['bussiness_name', 'rut', 'email', 'phone', 'trade_terms']
-
+        labels = {
+                'bussiness_name': 'Nombre de la empresa',
+                'rut': 'RUT',
+                'email': 'Correo electronico',
+                'phone': 'Telefono',
+                'trade_terms': 'Términos de comercio' 
+                }
     def clean_bussiness_name(self):
         bussiness_name = self.cleaned_data.get('bussiness_name')
         if not bussiness_name:
@@ -188,7 +204,12 @@ class RawMaterialForm(forms.ModelForm):
     class Meta:
         model = RawMaterial
         fields = ['name', 'description', 'stock_quantity', 'expiration_date']
-
+        labels = {
+            'name': 'Nombre',
+            'description': 'Descripción',
+            'stock_quantity': 'Cantidad en stock',
+            'expiration_date': 'Fecha de vencimiento' 
+        }
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if not name:
@@ -225,7 +246,12 @@ class RawMaterialForm(forms.ModelForm):
 class PriceHistoriesForm(forms.ModelForm):
     class Meta:
         model = PriceHistories
-        fields = ['fk_raw_supplier', 'price', 'date']
+        fields = ['price', 'date']
+        labels = {
+            'price': 'Precio',
+            'date': 'Fecha' 
+
+        }
 
     def clean_price(self):
         price = self.cleaned_data.get('price')
@@ -242,19 +268,16 @@ class PriceHistoriesForm(forms.ModelForm):
 class RawSupplierForm(forms.ModelForm):
     class Meta:
         model = RawSupplier
-        fields = ['fk_supplier', 'fk_raw_material']
+        fields = ['fk_supplier']
+        labels = {
+            'fk_supplier': 'Proveedor' 
+        }
 
     def clean_fk_supplier(self):
         fk_supplier = self.cleaned_data.get('fk_supplier')
         if not fk_supplier:
             raise forms.ValidationError('Se requiere un proveedor.')
         return fk_supplier
-    
-    def clean_fk_raw_material(self):
-        fk_raw_material = self.cleaned_data.get('fk_raw_material')
-        if not fk_raw_material:
-            raise forms.ValidationError('Se requiere una materia prima.')
-        return fk_raw_material
 
     def save(self, commit=True):
         raw_supplier = super().save(commit=False)

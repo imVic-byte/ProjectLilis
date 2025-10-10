@@ -29,8 +29,8 @@ class CRUD:
     def save(self, data):
         form = self.form_class(data)
         if form.is_valid():
-            form.save()
-            return True, form
+            obj = form.save()
+            return True, obj
         return False, form
 
     def update(self, id, data):
@@ -100,6 +100,26 @@ class RawSupplierService(CRUD):
         self.prices = PriceHistories
         self.form_class = RawSupplierForm
         self.prices_form_class = PriceHistoriesForm
+
+    def create_raw_supplier(self,data):
+        form = self.form_class(data)
+        if form.is_valid():
+            raw_supplier = form.save()
+            return True, raw_supplier
+        return False, form
+
+    def save_prices(self, raw_supplier, price, date):
+        data = {'fk_raw_supplier':raw_supplier, 'price': price, 'date': date}
+        print("_________________________________")
+        print(data)
+        print("_________________________________")
+        form = self.prices_form_class(data)
+        if form.is_valid():
+            obj = form.save(data)
+            obj.fk_raw_supplier = data['fk_raw_supplier']
+            obj.save()
+            return True, obj
+        return False, obj
 
     def search_by_supplier(self, supplier_id):
         return self.model.objects.filter(fk_supplier__id=supplier_id)
