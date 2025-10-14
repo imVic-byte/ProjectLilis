@@ -14,6 +14,7 @@ list_raw_materials = [
     path('rawmaterial_create/', views.rawmaterial_create, name='rawmaterial_create'),
     path('rawmaterial_update/<int:id>/', views.rawmaterial_update, name='rawmaterial_update'),
     path('rawmaterial_delete/<int:id>/', views.rawmaterial_delete, name='rawmaterial_delete'),
+    path('update_price/<int:id>/', views.update_price, name='update_price'),
 ]
 
 list_suppliers = [

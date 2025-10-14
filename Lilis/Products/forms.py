@@ -208,7 +208,7 @@ class RawMaterialForm(forms.ModelForm):
             'name': 'Nombre',
             'description': 'Descripción',
             'stock_quantity': 'Cantidad en stock',
-            'expiration_date': 'Fecha de vencimiento' 
+            'expiration_date': 'Fecha de vencimiento'
         }
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -229,6 +229,14 @@ class RawMaterialForm(forms.ModelForm):
         if stock_quantity is None or stock_quantity < 0:
             raise forms.ValidationError('La cantidad en stock debe ser un numero positivo.')
         return stock_quantity
+    
+    def clean_date(self):
+        expiration_date = self.cleaned_data.get('expiration_date')
+        if expiration_date and expiration_date < datetime.date.today():
+            raise forms.ValidationError("La fecha no puede ser pasada")
+        elif expiration_date is None:
+            raise forms.ValidationError('Se requiere una fecha.')
+        return expiration_date
 
     def save(self, commit=True):
         raw_material = super().save(commit=False)
@@ -259,6 +267,12 @@ class PriceHistoriesForm(forms.ModelForm):
             raise forms.ValidationError('El precio debe ser un numero positivo.')
         return price
 
+    def clean_date(self):
+        date = self.cleaned_data.get('date')
+        if not date:
+            raise forms.ValidationError('Se requiere una fecha.')
+        return date
+    
     def save(self, commit=True):
         price_history = super().save(commit=False)
         if commit:
@@ -286,5 +300,8 @@ class RawSupplierForm(forms.ModelForm):
         return raw_supplier
 
 
-
+class RawCombinedForm(forms.ModelForm):
+    raw_material = RawMaterialForm(prefix='material')
+    raw_supplier = RawSupplierForm(prefix='supplier')
+    price = PriceHistoriesForm(prefix='price')
 

@@ -59,7 +59,7 @@ def product_delete(request, id):
 
 @login_required
 def rawmaterial_list(request):
-    rawmaterials = raw_material_service.list()
+    rawmaterials = raw_material_service.list_actives()
     return render(request, 'main/rawmaterial_list.html',{'rawmaterials':rawmaterials})
 
 @login_required
@@ -69,26 +69,40 @@ def rawmaterial_view(request, id):
 
 @login_required
 def rawmaterial_create(request):
-    raw_material_form = raw_material_service.form_class()
-    raw_supplier_form = raw_supplier_service.form_class()
-    prices_form = raw_supplier_service.prices_form_class()
     if request.method == 'POST':
-        success, raw_material_obj = raw_material_service.save(request.POST)
-        if success:
-            success2, raw_supplier_obj = raw_supplier_service.create_raw_supplier(request.POST)
-            if success2:
-                raw_supplier_obj.fk_raw_material = raw_material_obj
-                raw_supplier_obj.save()
-                success3, prices_obj = raw_supplier_service.save_prices(raw_supplier_obj, request.POST.get('price'), request.POST.get('date'))
-                if success3:
-                    return redirect('rawmaterial_list')
+        raw_material_form = raw_material_service.form_class(request.POST, prefix='material')
+        raw_supplier_form = raw_supplier_service.form_class(request.POST, prefix='supplier')
+        prices_form = raw_supplier_service.prices_form_class(request.POST, prefix='price')
+
+        if raw_material_form.is_valid() and raw_supplier_form.is_valid() and prices_form.is_valid():
+            success, raw_material = raw_material_service.save(raw_material_form.cleaned_data)
+            if success:
+                success2, raw_supplier = raw_supplier_service.save(raw_supplier_form.cleaned_data)
+                if success2:
+                    raw_supplier.fk_raw_material = raw_material
+                    raw_supplier.save()
+                    success3, price = raw_supplier_service.save_prices(
+                        raw_supplier,
+                        prices_form.cleaned_data.get('price'),
+                        prices_form.cleaned_data.get('date')
+                    )
+                    if success3:
+                        return redirect('rawmaterial_list')
+                    else:
+                        raw_supplier_service.delete(raw_supplier.id)
+                        raw_material_service.delete(raw_material.id)
                 else:
-                    print(prices_obj.errors)
-            else:
-                print(raw_supplier_obj.errors)
-        else:
-            print(raw_material_obj.errors)
-    return render(request, 'main/rawmaterial_create.html', {'form':raw_material_form, 'raw_supplier_form':raw_supplier_form, 'prices_form':prices_form})
+                    raw_material_service.delete(raw_material.id)
+    else:
+        raw_material_form = raw_material_service.form_class(prefix='material')
+        raw_supplier_form = raw_supplier_service.form_class(prefix='supplier')
+        prices_form = raw_supplier_service.prices_form_class(prefix='price')
+
+    return render(request, 'main/rawmaterial_create.html', {
+        'form': raw_material_form,
+        'raw_supplier_form': raw_supplier_form,
+        'prices_form': prices_form
+    })
 
 @login_required
 def rawmaterial_update(request,id):
@@ -99,12 +113,21 @@ def rawmaterial_update(request,id):
     else:
         rawmaterial = raw_material_service.get(id)
         form = raw_material_service.form_class(instance=rawmaterial)
-    return render(request,'main/rawmaterial_update.html',{'form':form})
+    return render(request,'main/rawmaterial_update.html',{'form':form, 'material':rawmaterial})
+
+@login_required
+def update_price(request, id):
+    if request.method == 'POST':
+        pass
+    else:
+        prices = Prices.objects.get(id)
+        form = raw_supplier_service.prices_form_class(instance=prices)
+    return render(request, 'main/update_prices.html', {'form': form, 'prices':prices})
 
 @login_required
 def rawmaterial_delete(request,id):
     if request.method == 'GET':
-        success = raw_material_service.delete(id)
+        success = raw_material_service.deactivate(id)
         if success:
             return redirect('rawmaterial_list')
     return redirect('rawmaterial_list')

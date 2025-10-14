@@ -92,6 +92,20 @@ class RawMaterialService(CRUD):
     
     def search_by_description(self, description):
         return self.model.objects.filter(description__icontains=description)
+    
+    def deactivate(self, id):
+        try:
+            raw_material = self.model.objects.filter(id=id).first()
+            if raw_material:
+                raw_material.is_active = False
+                raw_material.save()
+                return True, raw_material
+            return False, None
+        except self.model.DoesNotExist:
+            return False, None
+    
+    def list_actives(self):
+        return self.model.objects.filter(is_active=True)
 
 
 class RawSupplierService(CRUD):
@@ -121,9 +135,6 @@ class RawSupplierService(CRUD):
             return True, obj
         return False, obj
 
-    def search_by_supplier(self, supplier_id):
-        return self.model.objects.filter(fk_supplier__id=supplier_id)
-    
     def search_by_raw_material(self, raw_material_id):
         return self.model.objects.filter(fk_raw_material__id=raw_material_id)
     
