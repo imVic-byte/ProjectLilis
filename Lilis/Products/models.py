@@ -1,4 +1,5 @@
 from django.db import models
+from Accounts.models import Profile
 
 class Supplier(models.Model):
     bussiness_name = models.CharField(max_length=100)
@@ -68,3 +69,36 @@ class Batch(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.batch_code}"
+    
+class PurchaseOrder(models.Model):
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, related_name="purchase_orders")
+    user = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="purchase_orders")
+    created_at = models.DateField(auto_now_add=True)
+    confirmation_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[('P', 'Pendiente'), ('C', 'Confirmada'), ('A', 'Anulada')], default='P')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    def __str__(self):
+        return f'{self.status} - pedido: {self.id} - {self.supplier} - total: {self.total_price}'
+
+    def total(self):
+        total = sum(detail.subtotal() for detail in self.details.all())
+        self.total_price = total
+        self.save(update_fields=["total_price"])
+        return total
+    
+class PurchaseOrderDetail(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name="details")
+    price_histories = models.ForeignKey(PriceHistories, on_delete=models.PROTECT, related_name="purchase_order_details")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def subtotal(self):
+        subtotal = self.price_histories.price * self.quantity
+        self.subtotal = subtotal
+        self.save(update_fields=["subtotal"])
+        return subtotal
+    
+    def __str__(self):
+        return f'{self.purchase_order.id} - {self.price_history.fk_raw_material.name} x {self.quantity} = {self.subtotal()}'
+
