@@ -7,6 +7,7 @@ from Products.forms import (
     CategoryForm, SupplierForm
 )
 
+from Main.suppliersAPI import API
 
 class CRUD:
     def get(self, id):
@@ -84,7 +85,6 @@ class SupplierService(CRUD):
     def search_by_trade_terms(self, trade_terms):
         return self.model.objects.filter(trade_terms__icontains=trade_terms)
     
-    
 class RawMaterialService(CRUD):
     def __init__(self):
         self.model = RawMaterial
@@ -147,6 +147,9 @@ class RawSupplierService(CRUD):
             return self.prices.objects.filter(fk_raw_supplier=raw_supplier)
         return self.prices.objects.none()
 
+    def get_data(self):
+        return API.get_data()
+    
 class BatchService(CRUD):
     def __init__(self):
         self.model = Batch

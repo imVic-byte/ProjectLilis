@@ -1,9 +1,8 @@
 from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
-from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService
+from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PriceHistories
 
-from .suppliersAPI import get_suppliers
 
 # Instancias de las clases CRUD, sino no se pueden usar xd
 product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService()
@@ -122,7 +121,7 @@ def update_price(request, id):
     if request.method == 'POST':
         pass
     else:
-        prices = Prices.objects.get(id)
+        prices = raw_supplier_service.get(id)
         form = raw_supplier_service.prices_form_class(instance=prices)
     return render(request, 'main/update_prices.html', {'form': form, 'prices':prices})
 
@@ -139,7 +138,7 @@ def rawmaterial_delete(request,id):
 
 @login_required
 def supplier_list(request):
-    suppliers = get_suppliers()
+    suppliers = raw_supplier_service.get_data()
     print(suppliers)
     return render(request, 'main/supplier_list.html', {'suppliers': suppliers})
 
