@@ -27,6 +27,7 @@ list_suppliers = [
 
 orders = [
     path('view_purchase_order/,', views.view_purchase_order, name='view_purchase_order'),
+    path('purchase_order_confirm', views.purchase_order_confirm, name='purchase_order_confirm'),
 ]
 
 urlpatterns = [

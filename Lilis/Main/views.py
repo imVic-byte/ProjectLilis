@@ -1,9 +1,9 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PurchaseOrderService
 import json
-from Products.models import Supplier
+from Products.models import Supplier, RawMaterial
 
 # Instancias de las clases CRUD, sino no se pueden usar xd
 product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service,purchase_order_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), PurchaseOrderService(),
@@ -186,8 +186,8 @@ def supplier_delete(request, id):
 #pedidos
 @login_required
 def view_purchase_order(request):
-    if request.method == 'POST':
-        purchase_order_form = purchase_order_service.form_class()
+    purchase_order_form = purchase_order_service.form_class()
+    if request.method == 'POST' and purchase_order_form.is_valid():
         user = request.user
         supplier_info_json = request.POST.get('supplier_info')
         if supplier_info_json:
@@ -221,8 +221,15 @@ def view_purchase_order(request):
                 'user': user,
                 'form': purchase_order_form
             }
+            print(context)
             return render(request, 'main/purchase_order.html', context)
         else:
             return render(request, 'main/purchase_order.html', {'error': 'No se encontró información del proveedor.'})
     else:
-        return render(request, 'main/purchase_order.html')
+        return render(request, 'main/purchase_order.html', {'form': purchase_order_form})
+
+@login_required
+def purchase_order_confirm(request):
+    if request.method == 'POST':
+        for key, value in request.POST.items():
+            print(f"{key}: {value}")

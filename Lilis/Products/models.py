@@ -93,12 +93,6 @@ class PurchaseOrderDetail(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def subtotal(self):
-        subtotal = self.price_histories.price * self.quantity
-        self.subtotal = subtotal
-        self.save(update_fields=["subtotal"])
-        return subtotal
-    
     def __str__(self):
         return f'{self.purchase_order.id} - {self.price_history.fk_raw_material.name} x {self.quantity} = {self.subtotal()}'
 

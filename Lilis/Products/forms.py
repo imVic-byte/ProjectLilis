@@ -330,3 +330,15 @@ class PurchaseOrderForm(forms.ModelForm):
         if commit:
             purchase_order.save()
         return purchase_order
+    
+class PurchaseOrderDetailForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrderDetail
+        fields = ['purchase_order','price_histories', 'quantity', 'subtotal']
+
+        def save(self, commit=True):
+            purchase_order_detail = super().save(commit=False)
+            if commit:
+                purchase_order_detail.save()
+            return purchase_order_detail
+        

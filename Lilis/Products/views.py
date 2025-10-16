@@ -172,4 +172,24 @@ class PurchaseOrderService(CRUD):
         self.model = PurchaseOrder
         self.form_class = PurchaseOrderForm
 
+    def save_purchase_order(self,data):
+        form = self.form_class(data)
+        if form.is_valid():
+            supplier = data['supplier']
+            user = data['user']
+            total_price = data['total_price']
+            obj = form.save()
+            obj.supplier = supplier
+            obj.user = user
+            obj.total_price = total_price
+            obj.save()
+            return True, obj
+        return False, form
+    
+class PurchaseOrderDetailsService(CRUD):
+    def __init__(self):
+        self.model = PurchaseOrder
+
+
+
     
