@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService
 
+from .suppliersAPI import get_suppliers
+
 # Instancias de las clases CRUD, sino no se pueden usar xd
 product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService()
 
@@ -137,7 +139,8 @@ def rawmaterial_delete(request,id):
 
 @login_required
 def supplier_list(request):
-    suppliers = supplier_service.list()
+    suppliers = get_suppliers()
+    print(suppliers)
     return render(request, 'main/supplier_list.html', {'suppliers': suppliers})
 
 @login_required

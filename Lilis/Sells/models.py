@@ -1,5 +1,5 @@
 from django.db import models
-from Products.models import Bash
+from Products.models import Batch
 from Accounts.models import Profile
 
 class Client(models.Model):
@@ -41,8 +41,8 @@ class WareClient(models.Model):
 
 class Transaction(models.Model):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, related_name="warehouse")
-    bash = models.ForeignKey(Bash, on_delete=models.PROTECT, related_name="bash")
-    user = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="user")
+    batch = models.ForeignKey(Batch, on_delete=models.PROTECT, related_name="bash")
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="transactions")
     date = models.DateField(auto_now_add=True)
     type = models.CharField(max_length=20, choices=[('I', 'Ingreso'), ('S', 'Salida')], default='I')
 
@@ -68,7 +68,7 @@ class SaleOrder(models.Model):
         return total
 
 class BatchPriceHistory(models.Model):
-    batch = models.ForeignKey(Bash, on_delete=models.PROTECT, related_name="batch_price_histories")
+    batch = models.ForeignKey(Batch, on_delete=models.PROTECT, related_name="batch_price_histories")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField(auto_now_add=True)
 
