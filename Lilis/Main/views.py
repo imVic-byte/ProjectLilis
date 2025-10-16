@@ -187,7 +187,7 @@ def supplier_delete(request, id):
 @login_required
 def view_purchase_order(request):
     purchase_order_form = purchase_order_service.form_class()
-    if request.method == 'POST' and purchase_order_form.is_valid():
+    if request.method == 'POST':
         user = request.user
         supplier_info_json = request.POST.get('supplier_info')
         if supplier_info_json:
@@ -227,7 +227,7 @@ def view_purchase_order(request):
             return render(request, 'main/purchase_order.html', {'error': 'No se encontró información del proveedor.'})
     else:
         return render(request, 'main/purchase_order.html', {'form': purchase_order_form})
-
+    
 @login_required
 def purchase_order_confirm(request):
     if request.method == 'POST':
