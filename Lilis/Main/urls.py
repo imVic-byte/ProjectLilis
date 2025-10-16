@@ -24,10 +24,16 @@ list_suppliers = [
     path('supplier_update/<int:id>/', views.supplier_update, name='supplier_update'),
     path('supplier_delete/<int:id>/', views.supplier_delete, name='supplier_delete'),
 ]
+
+orders = [
+    path('view_purchase_order/,', views.view_purchase_order, name='view_purchase_order'),
+]
+
 urlpatterns = [
     path('dashboard/' , views.dashboard ,name='dashboard'),
     *list_products,
     *list_raw_materials,
     *list_suppliers,
+    *orders,
 ]
 

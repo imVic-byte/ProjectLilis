@@ -1,11 +1,12 @@
 from django.shortcuts import render,redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
-from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PriceHistories
-
+from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PurchaseOrderService
+import json
+from Products.models import Supplier
 
 # Instancias de las clases CRUD, sino no se pueden usar xd
-product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService()
+product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service,purchase_order_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), PurchaseOrderService(),
 
 @login_required
 def dashboard(request):
@@ -181,3 +182,47 @@ def supplier_delete(request, id):
         if success:
             return redirect('supplier_list')
     return redirect('supplier_list')
+
+#pedidos
+@login_required
+def view_purchase_order(request):
+    if request.method == 'POST':
+        purchase_order_form = purchase_order_service.form_class()
+        user = request.user
+        supplier_info_json = request.POST.get('supplier_info')
+        if supplier_info_json:
+            supplier_info = json.loads(supplier_info_json)
+            supplier = Supplier(
+                id=supplier_info.get("id"),
+                bussiness_name=supplier_info.get("bussiness_name"),
+                rut=supplier_info.get("rut"),
+                email=supplier_info.get("email"),
+                phone=supplier_info.get("phone"),
+                trade_terms=supplier_info.get("trade_terms")
+            )
+
+            raw_materials = []
+            for key in request.POST:
+                if key.startswith('raw_'):
+                    try:
+                        data = json.loads(request.POST[key])
+                        quantity = int(data.get('quantity', 0))
+                        price = float(data.get('price', 0))
+                        if quantity > 0:
+                            data['subtotal'] = price * quantity
+                            raw_materials.append(data)
+                    except json.JSONDecodeError:
+                        return render(request, 'main/purchase_order.html', {'error': 'Error al procesar los datos del pedido.'})
+            total_order = sum(float(item["price"]) * int(item["quantity"]) for item in raw_materials)
+            context = {
+                'supplier': supplier,
+                'raw_materials': raw_materials,
+                'total_order': total_order,
+                'user': user,
+                'form': purchase_order_form
+            }
+            return render(request, 'main/purchase_order.html', context)
+        else:
+            return render(request, 'main/purchase_order.html', {'error': 'No se encontró información del proveedor.'})
+    else:
+        return render(request, 'main/purchase_order.html')

@@ -1,6 +1,6 @@
 from django import forms
 import datetime
-from Products.models import Product, Category, Supplier, RawMaterial, RawSupplier, PriceHistories, Batch
+from Products.models import Product, Category, Supplier, RawMaterial, RawSupplier, PriceHistories, Batch, PurchaseOrder, PurchaseOrderDetail
 
 class ProductForm(forms.ModelForm):
     expiration_date = forms.DateField(
@@ -305,3 +305,28 @@ class RawCombinedForm(forms.ModelForm):
     raw_supplier = RawSupplierForm(prefix='supplier')
     price = PriceHistoriesForm(prefix='price')
 
+class PurchaseOrderForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        fields = ['confirmation_date', 'status']
+        labels = {
+            'confirmation_date': 'Fecha de confirmacion',
+            'status': 'Estado' 
+        }
+    def clean_confirmation_date(self):
+        confirmation_date = self.cleaned_data.get('confirmation_date')
+        if not confirmation_date:
+            raise forms.ValidationError('Se requiere una fecha.')
+        return confirmation_date
+    
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if status is None:
+            raise forms.ValidationError('Se requiere un estado.')
+        return status
+    
+    def save(self, commit=True):
+        purchase_order = super().save(commit=False)
+        if commit:
+            purchase_order.save()
+        return purchase_order

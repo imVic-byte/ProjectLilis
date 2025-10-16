@@ -1,10 +1,10 @@
 from Products.models import (
     Product, Category, RawMaterial, Batch, Supplier, 
-    RawSupplier, PriceHistories, 
+    RawSupplier, PriceHistories, PurchaseOrder
 )
 from Products.forms import (
     RawMaterialForm, RawSupplierForm, PriceHistoriesForm, BatchForm, ProductForm, 
-    CategoryForm, SupplierForm
+    CategoryForm, SupplierForm, PurchaseOrderForm
 )
 
 from Main.suppliersAPI import API
@@ -166,3 +166,10 @@ class BatchService(CRUD):
     
     def list_raw_materials(self):
         return self.model.objects.filter(raw_material__isnull=False)
+    
+class PurchaseOrderService(CRUD):
+    def __init__(self):
+        self.model = PurchaseOrder
+        self.form_class = PurchaseOrderForm
+
+    
