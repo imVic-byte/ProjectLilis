@@ -1,12 +1,22 @@
 from Products.models import (
     Product, Category, RawMaterial, Batch, Supplier, 
-    RawSupplier, PriceHistories, 
-)
-from Products.forms import (
-    RawMaterialForm, RawSupplierForm, PriceHistoriesForm, BatchForm, ProductForm, 
-    CategoryForm, SupplierForm
+    RawSupplier, PriceHistories, PurchaseOrder
 )
 
+from Sells.models import (
+    BatchPriceHistory,
+)
+
+from Sells.forms import (
+    BatchPriceHistoryForm,
+)
+
+from Products.forms import (
+    RawMaterialForm, RawSupplierForm, PriceHistoriesForm, ProductBatchForm,RawBatchForm, ProductForm, 
+    CategoryForm, SupplierForm, PurchaseOrderForm, PurchaseOrderDetailForm
+)
+
+from Main.suppliersAPI import API
 
 class CRUD:
     def get(self, id):
@@ -84,7 +94,6 @@ class SupplierService(CRUD):
     def search_by_trade_terms(self, trade_terms):
         return self.model.objects.filter(trade_terms__icontains=trade_terms)
     
-    
 class RawMaterialService(CRUD):
     def __init__(self):
         self.model = RawMaterial
@@ -147,10 +156,62 @@ class RawSupplierService(CRUD):
             return self.prices.objects.filter(fk_raw_supplier=raw_supplier)
         return self.prices.objects.none()
 
+    def get_data(self):
+        return API.get_data()
+    
 class BatchService(CRUD):
     def __init__(self):
         self.model = Batch
-        self.form_class = BatchForm
+        self.product_form_class = ProductBatchForm
+        self.raw_form_class = RawBatchForm
+        self.price_model = BatchPriceHistory
+        self.price_form = BatchPriceHistoryForm
+
+    def save_price(self, data):
+        form = self.price_form(data)
+        if form.is_valid():
+            price = form.save()
+            return True, price
+        return False, form
+    
+    def delete_price(self, id):
+        try:
+            prices = self.price_model.objects.filter(batch__id=id)
+            for p in prices:
+                p.delete()
+            return True, prices
+        except self.price_model.DoesNotExist:
+            return False, None
+    
+    def save_product_batch(self,data):
+        form = self.product_form_class(data)
+        if form.is_valid():
+            product = form.save()
+            return True, product
+        return False, form
+    
+    def save_raw_batch(self,data):
+        form = self.raw_form_class(data)
+        if form.is_valid():
+            raw = form.save()
+            return True, raw
+        return False, form
+    
+    def update_product_batch(self,id,data):
+        batch = self.get(id)
+        form = self.product_form_class(data, instance=batch)
+        if form.is_valid():
+            obj = form.save()
+            return True, obj
+        return False, obj
+    
+    def update_raw_batch(self,id,data):
+        batch = self.get(id)
+        form = self.raw_form_class(data, instance=batch)
+        if form.is_valid():
+            form.save()
+            return True, form
+        return False, form
 
     def search_by_product(self, product_id):
         return self.model.objects.filter(product__id=product_id)
@@ -163,3 +224,27 @@ class BatchService(CRUD):
     
     def list_raw_materials(self):
         return self.model.objects.filter(raw_material__isnull=False)
+    
+class PurchaseOrderService(CRUD):
+    def __init__(self):
+        self.model = PurchaseOrder
+        self.form_class = PurchaseOrderForm
+
+    def save_purchase_order(self,data):
+        form = self.form_class(data)
+        if form.is_valid():
+            supplier = data['supplier']
+            user = data['user']
+            total_price = data['total_price']
+            obj = form.save()
+            obj.supplier = supplier
+            obj.user = user
+            obj.total_price = total_price
+            obj.save()
+            return True, obj
+        return False, form
+    
+class PurchaseOrderDetailsService(CRUD):
+    def __init__(self):
+        self.model = PurchaseOrder
+        self.form_class = PurchaseOrderDetailForm
