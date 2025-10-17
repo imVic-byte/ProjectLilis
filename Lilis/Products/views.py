@@ -2,6 +2,15 @@ from Products.models import (
     Product, Category, RawMaterial, Batch, Supplier, 
     RawSupplier, PriceHistories, PurchaseOrder
 )
+
+from Sells.models import (
+    BatchPriceHistory,
+)
+
+from Sells.forms import (
+    BatchPriceHistoryForm,
+)
+
 from Products.forms import (
     RawMaterialForm, RawSupplierForm, PriceHistoriesForm, ProductBatchForm,RawBatchForm, ProductForm, 
     CategoryForm, SupplierForm, PurchaseOrderForm, PurchaseOrderDetailForm
@@ -155,7 +164,25 @@ class BatchService(CRUD):
         self.model = Batch
         self.product_form_class = ProductBatchForm
         self.raw_form_class = RawBatchForm
+        self.price_model = BatchPriceHistory
+        self.price_form = BatchPriceHistoryForm
 
+    def save_price(self, data):
+        form = self.price_form(data)
+        if form.is_valid():
+            price = form.save()
+            return True, price
+        return False, form
+    
+    def delete_price(self, id):
+        try:
+            prices = self.price_model.objects.filter(batch__id=id)
+            for p in prices:
+                p.delete()
+            return True, prices
+        except self.price_model.DoesNotExist:
+            return False, None
+    
     def save_product_batch(self,data):
         form = self.product_form_class(data)
         if form.is_valid():
@@ -174,9 +201,9 @@ class BatchService(CRUD):
         batch = self.get(id)
         form = self.product_form_class(data, instance=batch)
         if form.is_valid():
-            form.save()
-            return True, form
-        return False, form
+            obj = form.save()
+            return True, obj
+        return False, obj
     
     def update_raw_batch(self,id,data):
         batch = self.get(id)
@@ -221,7 +248,3 @@ class PurchaseOrderDetailsService(CRUD):
     def __init__(self):
         self.model = PurchaseOrder
         self.form_class = PurchaseOrderDetailForm
-
-
-
-    

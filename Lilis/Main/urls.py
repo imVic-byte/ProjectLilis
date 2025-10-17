@@ -32,6 +32,7 @@ orders = [
 
 batchs =[
     path('product_batch_list/', views.product_batch_list, name='product_batch_list'),
+    path('product_batch_view/<int:id>/', views.product_batch_view, name='product_batch_view'),
     path('product_batch_create/', views.product_batch_create, name='product_batch_create'),
     path('product_batch_update/<int:id>/', views.product_batch_update, name='product_batch_update'),
     path('product_batch_delete/<int:id>/', views.product_batch_delete, name='product_batch_delete'),

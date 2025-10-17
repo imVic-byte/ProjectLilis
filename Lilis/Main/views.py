@@ -314,24 +314,49 @@ def product_batch_list(request):
     return render(request, 'main/product_batch_list.html', {'batches': batches})
 
 @login_required
+def product_batch_view(request,id):
+    if request.method == 'GET':
+        batch = batch_service.get(id)
+        prices = batch_service.price_model.objects.filter(batch__id=batch.id)
+        return render(request, 'main/product_batch_view.html', {'batch': batch, 'prices': prices})
+    else:
+        return redirect('product_batch_list')
+    
+
+@login_required
 def product_batch_create(request):
-    form = batch_service.form_class()
+    form = batch_service.product_form_class()
     if request.method == 'POST':
         form = batch_service.product_form_class(request.POST)
         if form.is_valid():
             success, batch = batch_service.save_product_batch(form.cleaned_data)
             if success:
-                return redirect('product_batch_list')
+                data = {
+                    'batch' : batch,
+                    'price' : request.POST.get('price')
+                }
+                success2, price = batch_service.save_price(data)
+                if success2:
+                    return redirect('product_batch_list')
             else:
                 return render(request, 'main/product_batch_create.html', {'form': batch})
     return render(request, 'main/product_batch_create.html', {'form': form})
 
 @login_required
 def product_batch_update(request, id):
+    form = batch_service.product_form_class()
     if request.method == 'POST':
-        success, form = batch_service.update_product_batch(id, request.POST)
+        success, obj = batch_service.update_product_batch(id, request.POST)
         if success:
-            return redirect('product_batch_list')
+            data = {
+                    'batch' : obj,
+                    'price' : request.POST.get('price')
+                }
+            success2, price = batch_service.save_price(data)
+            if success2:
+                return redirect('product_batch_list')
+            else:
+                print(data)
     else:
         batch = batch_service.get(id)
         form = batch_service.product_form_class(instance=batch)
@@ -341,9 +366,11 @@ def product_batch_update(request, id):
 @login_required
 def product_batch_delete(request, id):
     if request.method == 'GET':
-        success = batch_service.delete(id)
+        success, obj = batch_service.delete_price(id)
         if success:
-            return redirect('product_batch_list')
+            success2 = batch_service.delete(id)
+            if success2:
+                return redirect('product_batch_list')
     return redirect('product_batch_list')
 
 @login_required

@@ -103,15 +103,27 @@ class CategoryForm(forms.ModelForm):
         return category
 
 class ProductBatchForm(forms.ModelForm):
+    expiration_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],  # formato dd-mm-yyyy
+        widget=forms.DateInput(
+            attrs={
+                'type': 'text',           # text para poder escribir dd-mm-yyyy
+                'placeholder': 'dd/mm/yyyy',
+                'class': 'form-control'
+            }
+        )
+    )
     class Meta:
         model = Batch
-        fields = ['product', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
-        label = {
+        fields = ['product', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity', 'max_quantity']
+        labels = {
             'product': 'Producto',
             'batch_code': 'Codigo de lote',
             'expiration_date': 'Fecha de vencimiento',
             'initial_quantity': 'Cantidad inicial',
             'current_quantity': 'Cantidad actual',
+            'max_quantity' : 'Cantidad Maxima'
         }
     def clean_batch_code(self):
         batch_code = self.cleaned_data.get('batch_code')
@@ -138,7 +150,9 @@ class ProductBatchForm(forms.ModelForm):
     
     def clean_max_quantity(self):
         max_quantity = self.cleaned_data.get('max_quantity')
-        if max_quantity is None or max_quantity < 0:
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        current_quantity = self.cleaned_data.get('current_quantity')
+        if max_quantity is None or max_quantity < 0 or max_quantity < initial_quantity or max_quantity < current_quantity:
             raise forms.ValidationError('La cantidad maxima debe ser un numero positivo.')
         return max_quantity
     
@@ -155,15 +169,27 @@ class ProductBatchForm(forms.ModelForm):
         return batch
     
 class RawBatchForm(forms.ModelForm):
+    expiration_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],  # formato dd-mm-yyyy
+        widget=forms.DateInput(
+            attrs={
+                'type': 'text',           # text para poder escribir dd-mm-yyyy
+                'placeholder': 'dd/mm/yyyy',
+                'class': 'form-control'
+            }
+        )
+    )
     class Meta:
         model = Batch
-        fields = ['raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
-        label = {
+        fields = ['raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity', 'max_quantity']
+        labels = {
             'raw_material': 'Materia Prima',
             'batch_code': 'Codigo de lote',
             'expiration_date': 'Fecha de vencimiento',
             'initial_quantity': 'Cantidad inicial',
             'current_quantity': 'Cantidad actual',
+            'max_quantity' : 'Cantidad Maxima'
         }
     def clean_batch_code(self):
         batch_code = self.cleaned_data.get('batch_code')
@@ -190,7 +216,9 @@ class RawBatchForm(forms.ModelForm):
     
     def clean_max_quantity(self):
         max_quantity = self.cleaned_data.get('max_quantity')
-        if max_quantity is None or max_quantity < 0:
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        current_quantity = self.cleaned_data.get('current_quantity')
+        if max_quantity is None or max_quantity < 0 or max_quantity < initial_quantity or max_quantity < current_quantity:
             raise forms.ValidationError('La cantidad maxima debe ser un numero positivo.')
         return max_quantity
     

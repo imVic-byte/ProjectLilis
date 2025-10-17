@@ -64,8 +64,8 @@ class PriceHistories(models.Model):
         return f'{self.fk_raw_supplier.fk_raw_material.name} - {self.price} - {self.date}'
 
 class Batch(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE, null=True)
     batch_code = models.CharField(max_length=100, unique=True)
     expiration_date = models.DateField()
     initial_quantity = models.DecimalField(max_digits=10, decimal_places=2)
