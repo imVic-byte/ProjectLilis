@@ -7,6 +7,9 @@ class Supplier(models.Model):
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     trade_terms = models.TextField(blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, default = 'Chile')
+    currency = models.CharField(max_length=100, blank=True, default = 'CLP')
+    status = models.CharField(max_length=20, choices=[('A', 'Activo'), ('I', 'Inactivo')], default='A')
 
     def __str__(self):
         return f'{self.bussiness_name} - {self.rut}'
@@ -15,7 +18,7 @@ class RawMaterial(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    expiration_date = models.DateField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -38,6 +41,8 @@ class Product(models.Model):
     current_stock = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     expiration_date = models.DateField(blank=True, null=True)
     created_at = models.DateField(auto_now_add=True, null=True)
+    uom_sells = models.CharField(max_length=100, choices=[('KG', 'Kilogramos'), ('UN', 'Unidades'), ('GR', 'Gramos')], default='UN')
+    conversor_factor = models.IntegerField(default=1)
 
     def __str__(self):
         return f'{self.name} - {self.sku}'
@@ -53,19 +58,23 @@ class PriceHistories(models.Model):
     fk_raw_supplier = models.ForeignKey("RawSupplier", on_delete=models.PROTECT, related_name="price_histories", null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=1.19)
 
     def __str__(self):
         return f'{self.fk_raw_supplier.fk_raw_material.name} - {self.price} - {self.date}'
 
 class Batch(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    raw_material = models.ForeignKey(RawMaterial, on_delete=models.CASCADE, null=True)
     batch_code = models.CharField(max_length=100, unique=True)
     expiration_date = models.DateField()
     initial_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     current_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     max_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateField(auto_now_add=True)
+    perishable = models.BooleanField(default=False)
+    batch_control = models.BooleanField(default=False)
+    serie_control = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.product.name} - {self.batch_code}"
@@ -93,12 +102,6 @@ class PurchaseOrderDetail(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def subtotal(self):
-        subtotal = self.price_histories.price * self.quantity
-        self.subtotal = subtotal
-        self.save(update_fields=["subtotal"])
-        return subtotal
-    
     def __str__(self):
         return f'{self.purchase_order.id} - {self.price_history.fk_raw_material.name} x {self.quantity} = {self.subtotal()}'
 

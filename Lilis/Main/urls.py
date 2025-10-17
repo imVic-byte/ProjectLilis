@@ -24,10 +24,27 @@ list_suppliers = [
     path('supplier_update/<int:id>/', views.supplier_update, name='supplier_update'),
     path('supplier_delete/<int:id>/', views.supplier_delete, name='supplier_delete'),
 ]
+
+orders = [
+    path('view_purchase_order/,', views.view_purchase_order, name='view_purchase_order'),
+    path('purchase_order_confirm', views.purchase_order_confirm, name='purchase_order_confirm'),
+]
+
+batchs =[
+    path('product_batch_list/', views.product_batch_list, name='product_batch_list'),
+    path('product_batch_view/<int:id>/', views.product_batch_view, name='product_batch_view'),
+    path('product_batch_create/', views.product_batch_create, name='product_batch_create'),
+    path('product_batch_update/<int:id>/', views.product_batch_update, name='product_batch_update'),
+    path('product_batch_delete/<int:id>/', views.product_batch_delete, name='product_batch_delete'),
+]
+
 urlpatterns = [
     path('dashboard/' , views.dashboard ,name='dashboard'),
     *list_products,
     *list_raw_materials,
     *list_suppliers,
+    *orders,
+    *batchs,
+
 ]
 

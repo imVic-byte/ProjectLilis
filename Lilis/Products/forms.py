@@ -1,6 +1,6 @@
 from django import forms
 import datetime
-from Products.models import Product, Category, Supplier, RawMaterial, RawSupplier, PriceHistories, Batch
+from Products.models import Product, Category, Supplier, RawMaterial, RawSupplier, PriceHistories, Batch, PurchaseOrder, PurchaseOrderDetail
 
 class ProductForm(forms.ModelForm):
     expiration_date = forms.DateField(
@@ -102,17 +102,28 @@ class CategoryForm(forms.ModelForm):
             category.save()
         return category
 
-class BatchForm(forms.ModelForm):
+class ProductBatchForm(forms.ModelForm):
+    expiration_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],  # formato dd-mm-yyyy
+        widget=forms.DateInput(
+            attrs={
+                'type': 'text',           # text para poder escribir dd-mm-yyyy
+                'placeholder': 'dd/mm/yyyy',
+                'class': 'form-control'
+            }
+        )
+    )
     class Meta:
         model = Batch
-        fields = ['product', 'raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
-        label = {
+        fields = ['product', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity', 'max_quantity']
+        labels = {
             'product': 'Producto',
-            'raw_material': 'Material',
             'batch_code': 'Codigo de lote',
             'expiration_date': 'Fecha de vencimiento',
             'initial_quantity': 'Cantidad inicial',
             'current_quantity': 'Cantidad actual',
+            'max_quantity' : 'Cantidad Maxima'
         }
     def clean_batch_code(self):
         batch_code = self.cleaned_data.get('batch_code')
@@ -139,7 +150,75 @@ class BatchForm(forms.ModelForm):
     
     def clean_max_quantity(self):
         max_quantity = self.cleaned_data.get('max_quantity')
-        if max_quantity is None or max_quantity < 0:
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        current_quantity = self.cleaned_data.get('current_quantity')
+        if max_quantity is None or max_quantity < 0 or max_quantity < initial_quantity or max_quantity < current_quantity:
+            raise forms.ValidationError('La cantidad maxima debe ser un numero positivo.')
+        return max_quantity
+    
+    def clear_expiration_date(self):
+        expiration_date = self.cleaned_data.get('expiration_date')
+        created_at = self.cleaned_data.get('created_at')
+        if expiration_date < created_at:
+            raise forms.ValidationError('La fecha de expiracion no puede ser anterior a la fecha de creacion.')
+        
+    def save(self, commit=True):
+        batch = super().save(commit=False)
+        if commit:
+            batch.save()
+        return batch
+    
+class RawBatchForm(forms.ModelForm):
+    expiration_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],  # formato dd-mm-yyyy
+        widget=forms.DateInput(
+            attrs={
+                'type': 'text',           # text para poder escribir dd-mm-yyyy
+                'placeholder': 'dd/mm/yyyy',
+                'class': 'form-control'
+            }
+        )
+    )
+    class Meta:
+        model = Batch
+        fields = ['raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity', 'max_quantity']
+        labels = {
+            'raw_material': 'Materia Prima',
+            'batch_code': 'Codigo de lote',
+            'expiration_date': 'Fecha de vencimiento',
+            'initial_quantity': 'Cantidad inicial',
+            'current_quantity': 'Cantidad actual',
+            'max_quantity' : 'Cantidad Maxima'
+        }
+    def clean_batch_code(self):
+        batch_code = self.cleaned_data.get('batch_code')
+        if not batch_code:
+            raise forms.ValidationError('Se requiere un codigo de lote.')
+        if len(batch_code) < 3:
+            raise forms.ValidationError('El codigo de lote debe tener mas de 3 caracteres.')
+        return batch_code
+    
+    def clean_initial_quantity(self):
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        if initial_quantity is None or initial_quantity < 0:
+            raise forms.ValidationError('La cantidad inicial debe ser un numero positivo.')
+        return initial_quantity
+
+    def clean_current_quantity(self):
+        current_quantity = self.cleaned_data.get('current_quantity')
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        if current_quantity is None or current_quantity < 0:
+            raise forms.ValidationError('La cantidad actual debe ser un numero positivo.')
+        if initial_quantity is not None and current_quantity > initial_quantity:
+            raise forms.ValidationError('La cantidad actual no puede ser mayor a la cantidad inicial.')
+        return current_quantity 
+    
+    def clean_max_quantity(self):
+        max_quantity = self.cleaned_data.get('max_quantity')
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        current_quantity = self.cleaned_data.get('current_quantity')
+        if max_quantity is None or max_quantity < 0 or max_quantity < initial_quantity or max_quantity < current_quantity:
             raise forms.ValidationError('La cantidad maxima debe ser un numero positivo.')
         return max_quantity
     
@@ -230,26 +309,11 @@ class RawMaterialForm(forms.ModelForm):
             raise forms.ValidationError('La cantidad en stock debe ser un numero positivo.')
         return stock_quantity
     
-    def clean_date(self):
-        expiration_date = self.cleaned_data.get('expiration_date')
-        if expiration_date and expiration_date < datetime.date.today():
-            raise forms.ValidationError("La fecha no puede ser pasada")
-        elif expiration_date is None:
-            raise forms.ValidationError('Se requiere una fecha.')
-        return expiration_date
-
     def save(self, commit=True):
         raw_material = super().save(commit=False)
         if commit:
             raw_material.save()
         return raw_material
-
-
-    def save(self, commit=True):
-        raw_supplier = super().save(commit=False)
-        if commit:
-            raw_supplier.save()
-        return raw_supplier
 
 class PriceHistoriesForm(forms.ModelForm):
     class Meta:
@@ -305,3 +369,47 @@ class RawCombinedForm(forms.ModelForm):
     raw_supplier = RawSupplierForm(prefix='supplier')
     price = PriceHistoriesForm(prefix='price')
 
+class PurchaseOrderForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        fields = ['confirmation_date', 'status']
+        labels = {
+            'confirmation_date': 'Fecha de confirmacion',
+            'status': 'Estado' 
+        }
+        widgets = {
+            'confirmation_date': forms.DateInput(attrs={
+                'type': 'date',
+                'required':True,
+                'placeholder': 'dd/mm/yyyy',
+        })
+        }
+    def clean_confirmation_date(self):
+        confirmation_date = self.cleaned_data.get('confirmation_date')
+        if not confirmation_date:
+            raise forms.ValidationError('Se requiere una fecha.')
+        return confirmation_date
+    
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if status is None:
+            raise forms.ValidationError('Se requiere un estado.')
+        return status
+    
+    def save(self, commit=True):
+        purchase_order = super().save(commit=False)
+        if commit:
+            purchase_order.save()
+        return purchase_order
+    
+class PurchaseOrderDetailForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrderDetail
+        fields = ['purchase_order','price_histories', 'quantity', 'subtotal']
+
+        def save(self, commit=True):
+            purchase_order_detail = super().save(commit=False)
+            if commit:
+                purchase_order_detail.save()
+            return purchase_order_detail
+        
