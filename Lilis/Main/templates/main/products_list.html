@@ -52,6 +52,9 @@
                                 No aplica
                                 {% endif %}
                             </li>
+                            <li>
+                                <strong>Precio Actual: $</strong> {{ p.price }}
+                            </li>
                         </ul>
                         <a href="{% url 'product_update' p.id %}" class="mt-2 text-end btn btn-primary">
                             Editar

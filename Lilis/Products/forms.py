@@ -102,13 +102,64 @@ class CategoryForm(forms.ModelForm):
             category.save()
         return category
 
-class BatchForm(forms.ModelForm):
+class ProductBatchForm(forms.ModelForm):
     class Meta:
         model = Batch
-        fields = ['product', 'raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
+        fields = ['product', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
         label = {
             'product': 'Producto',
-            'raw_material': 'Material',
+            'batch_code': 'Codigo de lote',
+            'expiration_date': 'Fecha de vencimiento',
+            'initial_quantity': 'Cantidad inicial',
+            'current_quantity': 'Cantidad actual',
+        }
+    def clean_batch_code(self):
+        batch_code = self.cleaned_data.get('batch_code')
+        if not batch_code:
+            raise forms.ValidationError('Se requiere un codigo de lote.')
+        if len(batch_code) < 3:
+            raise forms.ValidationError('El codigo de lote debe tener mas de 3 caracteres.')
+        return batch_code
+    
+    def clean_initial_quantity(self):
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        if initial_quantity is None or initial_quantity < 0:
+            raise forms.ValidationError('La cantidad inicial debe ser un numero positivo.')
+        return initial_quantity
+
+    def clean_current_quantity(self):
+        current_quantity = self.cleaned_data.get('current_quantity')
+        initial_quantity = self.cleaned_data.get('initial_quantity')
+        if current_quantity is None or current_quantity < 0:
+            raise forms.ValidationError('La cantidad actual debe ser un numero positivo.')
+        if initial_quantity is not None and current_quantity > initial_quantity:
+            raise forms.ValidationError('La cantidad actual no puede ser mayor a la cantidad inicial.')
+        return current_quantity 
+    
+    def clean_max_quantity(self):
+        max_quantity = self.cleaned_data.get('max_quantity')
+        if max_quantity is None or max_quantity < 0:
+            raise forms.ValidationError('La cantidad maxima debe ser un numero positivo.')
+        return max_quantity
+    
+    def clear_expiration_date(self):
+        expiration_date = self.cleaned_data.get('expiration_date')
+        created_at = self.cleaned_data.get('created_at')
+        if expiration_date < created_at:
+            raise forms.ValidationError('La fecha de expiracion no puede ser anterior a la fecha de creacion.')
+        
+    def save(self, commit=True):
+        batch = super().save(commit=False)
+        if commit:
+            batch.save()
+        return batch
+    
+class RawBatchForm(forms.ModelForm):
+    class Meta:
+        model = Batch
+        fields = ['raw_material', 'batch_code', 'expiration_date', 'initial_quantity', 'current_quantity']
+        label = {
+            'raw_material': 'Materia Prima',
             'batch_code': 'Codigo de lote',
             'expiration_date': 'Fecha de vencimiento',
             'initial_quantity': 'Cantidad inicial',
@@ -230,26 +281,11 @@ class RawMaterialForm(forms.ModelForm):
             raise forms.ValidationError('La cantidad en stock debe ser un numero positivo.')
         return stock_quantity
     
-    def clean_date(self):
-        expiration_date = self.cleaned_data.get('expiration_date')
-        if expiration_date and expiration_date < datetime.date.today():
-            raise forms.ValidationError("La fecha no puede ser pasada")
-        elif expiration_date is None:
-            raise forms.ValidationError('Se requiere una fecha.')
-        return expiration_date
-
     def save(self, commit=True):
         raw_material = super().save(commit=False)
         if commit:
             raw_material.save()
         return raw_material
-
-
-    def save(self, commit=True):
-        raw_supplier = super().save(commit=False)
-        if commit:
-            raw_supplier.save()
-        return raw_supplier
 
 class PriceHistoriesForm(forms.ModelForm):
     class Meta:

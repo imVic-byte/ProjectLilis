@@ -5,6 +5,10 @@ from Products.views import ProductService, CategoryService, RawMaterialService, 
 import json
 from Products.models import Supplier, RawMaterial
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Instancias de las clases CRUD, sino no se pueden usar xd
 product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service,purchase_order_service, purchase_order_detail_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), PurchaseOrderService(),PurchaseOrderDetailsService()
 
@@ -234,61 +238,153 @@ def purchase_order_confirm(request):
         supplier_info_json = request.POST.get('supplier_info')
         if not supplier_info_json:
             return render(request, 'main/purchase_order.html', {'error': 'No se encontró información del proveedor.'})
+        
         supplier_info = json.loads(supplier_info_json)
         obj, created = Supplier.objects.get_or_create(
-            rut=supplier_info.get("rut"), 
-            bussiness_name=supplier_info.get("bussiness_name"), 
-            email=supplier_info.get("email"), 
-            phone=supplier_info.get("phone"), 
-            trade_terms=supplier_info.get("trade_terms")
-            )
-        if not created:
-            print("ya existia xd")
-        purchase_data = {
-            'supplier' : obj.id,
-            'user' : request.user.id,
-            'confirmation_date' : request.POST.get('confirmation_date'),
-            'status' : request.POST.get('status'),
-            'total_price' : request.POST.get('total_price')
-        }
-        purchase_success, purchase = purchase_order_service.save_purchase_order(purchase_data)
-        if not purchase_success:
-            print("error al crear el pedido")
-        raw_suppliers = []
-        raw_materials = []
+            rut=supplier_info.get("rut"),
+            defaults={
+                'bussiness_name': supplier_info.get("bussiness_name"),
+                'email': supplier_info.get("email"),
+                'phone': supplier_info.get("phone"),
+                'trade_terms': supplier_info.get("trade_terms")
+            }
+        )
+        purchase_order = purchase_order_service.model(
+            supplier=obj,
+            user=request.user.profile, 
+            confirmation_date=request.POST.get('confirmation_date'),
+            status=request.POST.get('status'),
+            total_price=float(request.POST.get('total_price').replace(',', '.'))
+        )
+        purchase_order.save()
         today = datetime.date.today()
+
         for key in request.POST:
             if key.startswith('raw_'):
                 try:
                     data = json.loads(request.POST[key])
                     data['stock_quantity'] = data['quantity']
+                    date_str = data['expiration_date']
+                    expiration_date = datetime.datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %Z").date()
+                    data['expiration_date'] = expiration_date
                     success, raw_obj = raw_material_service.save(data)
                     if success:
-                        raw_materials.append(data)
                         success2, raw_supplier = raw_supplier_service.create_raw_supplier(obj.id)
+                        print("\n========== DEBUG purchase_order_confirm 2 ==========")
                         if success2:
+                            print("\n========== DEBUG purchase_order_confirm 3 ==========")
                             raw_supplier.fk_raw_material = raw_obj.id
                             raw_supplier.save()
                             success3, price = raw_supplier_service.save_prices(
                                 raw_supplier.id,
                                 data['price'],
-                                today,
+                                today
                             )
                             if success3:
+                                print("\n========== DEBUG purchase_order_confirm 4 ==========")
                                 purchase_order_details = {
-                                    'purchase_order':purchase.id,
-                                    'price_histories':price.id,
+                                    'purchase_order': purchase_order.id,
+                                    'price_histories': price.id,
                                     'quantity': data['quantity'],
-                                    'subtotal' : data['subtotal']
+                                    'subtotal': data['subtotal']
                                 }
-                                success_purchase_detail, purchase_detail = purchase_order_detail_service.save(purchase_order_details)
-                                if success_purchase_detail:
-                                    print("todo ok")
+                                success_purchase_detail, _ = purchase_order_detail_service.save(purchase_order_details)
+                                if not success_purchase_detail:
+                                    return render(request, 'main/purchase_order_confirm.html', {'error': '4'})
+                            else:
+                                return render(request, 'main/purchase_order_confirm.html', {'error': '3'})
                         else:
                             raw_supplier_service.delete(raw_supplier.id)
                             raw_material_service.delete(raw_obj.id)
+                            return render(request, 'main/purchase_order_confirm.html', {'error': '2'})
                     else:
-                        print("error al crear la materia prima ", key)
+                        return render(request, 'main/purchase_order_confirm.html', {'error': raw_obj})
                 except json.JSONDecodeError:
-                    return render(request, 'main/purchase_order.html', {'error': 'Error al procesar los datos del pedido.'})
-        return render(request, 'main/purchase_order.html')
+                    return render(request, 'main/purchase_order_confirm.html', {'error': 'Error al procesar los datos del pedido.', 'key':request.POST[key]})
+        return redirect('suppliers_list')
+
+    return render(request, 'main/purchase_order_confirm.html')
+
+
+#BATCHSSSSSSSSSSSSSs
+
+@login_required
+def product_batch_list(request):
+    batches = batch_service.list_products()
+    return render(request, 'main/product_batch_list.html', {'batches': batches})
+
+@login_required
+def product_batch_create(request):
+    form = batch_service.form_class()
+    if request.method == 'POST':
+        form = batch_service.product_form_class(request.POST)
+        if form.is_valid():
+            success, batch = batch_service.save_product_batch(form.cleaned_data)
+            if success:
+                return redirect('product_batch_list')
+            else:
+                return render(request, 'main/product_batch_create.html', {'form': batch})
+    return render(request, 'main/product_batch_create.html', {'form': form})
+
+@login_required
+def product_batch_update(request, id):
+    if request.method == 'POST':
+        success, form = batch_service.update_product_batch(id, request.POST)
+        if success:
+            return redirect('product_batch_list')
+    else:
+        batch = batch_service.get(id)
+        form = batch_service.product_form_class(instance=batch)
+        return render(request, 'main/product_batch_update.html', {'form': form})
+    return render(request, 'main/product_batch_update.html', {'form': form})
+
+@login_required
+def product_batch_delete(request, id):
+    if request.method == 'GET':
+        success = batch_service.delete(id)
+        if success:
+            return redirect('product_batch_list')
+    return redirect('product_batch_list')
+
+@login_required
+def raw_batch_list(request):
+    if request.method == 'POST':
+        batches = batch_service.list_raw_materials()
+        return render(request, 'main/raw_batch_list.html', {'batches': batches})
+    else:
+        return redirect('raw_batch_list')
+
+@login_required
+def raw_batch_create(request):
+    form = batch_service.raw_form_class()
+    if request.method == 'POST':
+        form = batch_service.raw_form_class(request.POST)
+        if form.is_valid():
+            success, batch = batch_service.save_raw_batch(request.POST)
+            if success:
+                return redirect('raw_batch_list')
+            else:
+                return render(request, 'main/raw_batch_create.html', {'form': batch})
+    return render(request, 'main/raw_batch_create.html', {'form': form})
+
+@login_required
+def raw_batch_update(request, id):
+    if request.method == 'POST':
+        success, form = batch_service.update_raw_batch(id, request.POST)
+        if success:
+            return redirect('raw_batch_list')
+    else:
+        batch = batch_service.get(id)
+        form = batch_service.raw_form_class(instance=batch)
+        return render(request, 'main/raw_batch_update.html', {'form': form})
+    return render(request, 'main/raw_batch_update.html', {'form': form})
+
+@login_required
+def raw_batch_delete(request, id):
+    if request.method == 'GET':
+        success = batch_service.delete(id)
+        if success:
+            return redirect('raw_batch_list')
+    return redirect('raw_batch_list')
+
+#

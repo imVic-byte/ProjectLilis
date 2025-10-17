@@ -3,7 +3,7 @@ from Products.models import (
     RawSupplier, PriceHistories, PurchaseOrder
 )
 from Products.forms import (
-    RawMaterialForm, RawSupplierForm, PriceHistoriesForm, BatchForm, ProductForm, 
+    RawMaterialForm, RawSupplierForm, PriceHistoriesForm, ProductBatchForm,RawBatchForm, ProductForm, 
     CategoryForm, SupplierForm, PurchaseOrderForm, PurchaseOrderDetailForm
 )
 
@@ -153,7 +153,38 @@ class RawSupplierService(CRUD):
 class BatchService(CRUD):
     def __init__(self):
         self.model = Batch
-        self.form_class = BatchForm
+        self.product_form_class = ProductBatchForm
+        self.raw_form_class = RawBatchForm
+
+    def save_product_batch(self,data):
+        form = self.product_form_class(data)
+        if form.is_valid():
+            product = form.save()
+            return True, product
+        return False, form
+    
+    def save_raw_batch(self,data):
+        form = self.raw_form_class(data)
+        if form.is_valid():
+            raw = form.save()
+            return True, raw
+        return False, form
+    
+    def update_product_batch(self,id,data):
+        batch = self.get(id)
+        form = self.product_form_class(data, instance=batch)
+        if form.is_valid():
+            form.save()
+            return True, form
+        return False, form
+    
+    def update_raw_batch(self,id,data):
+        batch = self.get(id)
+        form = self.raw_form_class(data, instance=batch)
+        if form.is_valid():
+            form.save()
+            return True, form
+        return False, form
 
     def search_by_product(self, product_id):
         return self.model.objects.filter(product__id=product_id)

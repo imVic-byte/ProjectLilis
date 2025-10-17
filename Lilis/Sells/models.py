@@ -16,6 +16,7 @@ class Client(models.Model):
 class Location (models.Model):
     name = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default="Chile")
 
     def __str__(self):
         return self.name

@@ -75,11 +75,12 @@
                                         <input type="hidden" name="raw_{{ forloop.counter }}" class="raw-json" value='{
                                             "id": "{{ raw.id }}",
                                             "name": "{{ raw.name|escapejs }}",
+                                            "description": "{{ raw.description|escapejs }}",
                                             "price": "{{ raw.price }}",
                                             "quantity": "{{ raw.quantity }}",
-                                            "subtotal": "{{ raw.subtotal|floatformat:2 }}"
-                                            "expiration_date": "{{ raw.expiration_date|escapejs }}"
-                                            "is_active": {{ True }}
+                                            "subtotal": "{{ raw.subtotal|floatformat:2 }}",
+                                            "expiration_date": "{{ raw.expiration_date|escapejs }}",
+                                            "is_active": true
                                         }'>
                                     </tr>
                                     {% endfor %}
