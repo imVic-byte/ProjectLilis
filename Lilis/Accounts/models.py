@@ -12,13 +12,13 @@ class Module(models.Model):
 
 class Role(models.Model):
     group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name="role")
-    name = models.CharField(max_length=50, unique=True)
+    #name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
     privilege_level = models.IntegerField(default=0)
 
 
     def __str__(self):
-        return self.name
+        return self.group.name
 
 class RoleModulePermission(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="module_perms")

@@ -55,7 +55,7 @@ class RoleModulePermissionAdmin(admin.ModelAdmin):
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description',)
+    list_display = ('group', 'description',)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

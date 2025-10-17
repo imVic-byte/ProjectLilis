@@ -25,6 +25,10 @@ list_suppliers = [
     path('supplier_delete/<int:id>/', views.supplier_delete, name='supplier_delete'),
 ]
 
+list_users = [
+    path("user_list/", views.user_list, name="user_list"),
+    path("user_update/<int:id>/", views.user_update, name="user_update"),
+    path("user_delete/<int:id>/", views.user_delete, name="user_delete"),
 orders = [
     path('view_purchase_order/,', views.view_purchase_order, name='view_purchase_order'),
     path('purchase_order_confirm', views.purchase_order_confirm, name='purchase_order_confirm'),
@@ -43,6 +47,7 @@ urlpatterns = [
     *list_products,
     *list_raw_materials,
     *list_suppliers,
+    *list_users,
     *orders,
     *batchs,
 
