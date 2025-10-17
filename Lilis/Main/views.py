@@ -1,12 +1,11 @@
 from django.shortcuts import render,redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required, permission_required
 from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService
-
-from .suppliersAPI import get_suppliers
+from Accounts.views import UserService
+from Accounts.forms import UserForm, ProfileForm
 
 # Instancias de las clases CRUD, sino no se pueden usar xd
-product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService()
+product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service, user_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), UserService()
 
 @login_required
 def dashboard(request):
@@ -14,6 +13,7 @@ def dashboard(request):
 
 #PRODUCTOSSSSSSSSSs
 @login_required
+#@permission_required('products.view_product', raise_exception=True)
 def products_list(request):
     products = product_service.list()
     return render(request, 'main/products_list.html', {'products': products})
@@ -24,6 +24,7 @@ def product_view(request, id):
     return render(request, 'main/product.html', {'p': product})
 
 @login_required
+#@permission_required('products.add_product', raise_exception=True)
 def product_create(request):
     print("REQUEST METHOD:", request.method)  # <-- debug
     if request.method == 'POST':
@@ -40,6 +41,7 @@ def product_create(request):
 
 
 @login_required
+@permission_required('products.change_product', raise_exception=True)
 def product_update(request, id):
     if request.method == 'POST':
         success, form = product_service.update(id, request.POST)
@@ -52,6 +54,7 @@ def product_update(request, id):
     return render(request, 'main/product_update.html', {'form': form})
 
 @login_required
+@permission_required('products.delete_product', raise_exception=True)
 def product_delete(request, id):
         if request.method == 'GET':
             success = product_service.delete(id)
@@ -60,6 +63,7 @@ def product_delete(request, id):
         return redirect('products_list') 
 
 @login_required
+#permission_required('products.view_rawmaterial', raise_exception=True)
 def rawmaterial_list(request):
     rawmaterials = raw_material_service.list_actives()
     return render(request, 'main/rawmaterial_list.html',{'rawmaterials':rawmaterials})
@@ -70,6 +74,7 @@ def rawmaterial_view(request, id):
     return render(request, 'main/rawmaterial.html', {'rawmaterial':rawmaterial})
 
 @login_required
+@permission_required('products.add_rawmaterial', raise_exception=True)
 def rawmaterial_create(request):
     if request.method == 'POST':
         raw_material_form = raw_material_service.form_class(request.POST, prefix='material')
@@ -107,6 +112,7 @@ def rawmaterial_create(request):
     })
 
 @login_required
+@permission_required('products.change_rawmaterial', raise_exception=True)
 def rawmaterial_update(request,id):
     if request.method == 'POST':
         success, form = raw_material_service.update(id, request.POST)
@@ -122,11 +128,12 @@ def update_price(request, id):
     if request.method == 'POST':
         pass
     else:
-        prices = Prices.objects.get(id)
+        prices = prices.objects.get(id)
         form = raw_supplier_service.prices_form_class(instance=prices)
     return render(request, 'main/update_prices.html', {'form': form, 'prices':prices})
 
 @login_required
+@permission_required('products.delete_rawmaterial', raise_exception=True)
 def rawmaterial_delete(request,id):
     if request.method == 'GET':
         success = raw_material_service.deactivate(id)
@@ -138,9 +145,9 @@ def rawmaterial_delete(request,id):
 #----------------- PROVEEDORES -----------------
 
 @login_required
+@permission_required('products.view_supplier', raise_exception=True)
 def supplier_list(request):
-    suppliers = get_suppliers()
-    print(suppliers)
+    suppliers = supplier_service.list()
     return render(request, 'main/supplier_list.html', {'suppliers': suppliers})
 
 @login_required
@@ -182,3 +189,40 @@ def supplier_delete(request, id):
         if success:
             return redirect('supplier_list')
     return redirect('supplier_list')
+
+#----------------- USUARIOS -----------------
+@login_required
+@permission_required('Accounts.view_user',raise_exception=False)
+def user_list(request):
+    users = user_service.list()
+    return render(request, "main/user_list.html", {"users": users})
+
+
+@login_required
+
+def user_update(request, id):
+    user = user_service.get(id)
+    if request.method == "POST":
+        success, forms = user_service.update(id, request.POST)
+        if success:
+            return redirect("user_list")
+        else:
+            user_form, profile_form = forms
+    else:
+        user_form = UserForm(instance=user)
+        profile_form = ProfileForm(instance=user.profile)
+
+    return render(
+        request,
+        "main/user_update.html",
+        {"user_form": user_form, "profile_form": profile_form, "user": user},
+    )
+
+
+@login_required
+def user_delete(request, id):
+    if request.method == "GET":
+        success = user_service.delete(id)
+        if success:
+            return redirect('user_list')
+    return redirect("user_list")

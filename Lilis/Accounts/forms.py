@@ -84,6 +84,8 @@ class RegistroForm(forms.ModelForm):
             password=self.cleaned_data["password1"]
         )
 
+        selected_role = self.cleaned_data.get("role")
+
         # Crear el perfil asociado al usuario
         profile = Profile(
             user=user,
@@ -95,5 +97,28 @@ class RegistroForm(forms.ModelForm):
         if commit:
             user.save()
             profile.save()
+            if selected_role:
+                user.groups.add(selected_role.group)
 
         return user
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+        labels = {
+            "first_name": "Nombre",
+            "last_name": "Apellido",
+            "email": "Correo electrónico",
+        }
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["run", "phone", "role"]
+        labels = {
+            "run": "RUT",
+            "phone": "Teléfono",
+            "role": "Rol",
+        }

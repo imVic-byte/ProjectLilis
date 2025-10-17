@@ -69,6 +69,10 @@ APP_MODEL_MAP = {
         "app_label": "accounts",
         "models": ['profile', 'role'],
     },
+    "auth": {
+        "app_label":"auth",
+        "models": ['user'],
+    }
 }
 
 def _as_tuple(actions):
@@ -155,6 +159,11 @@ class Command(BaseCommand):
                 # Permisos nativos para Admin
                 if SYNC_NATIVE_DJANGO_PERMS:
                     _sync_native_perms_for_role(group, mcode, actions)
+
+            if rname == 'Administrador':
+                _sync_native_perms_for_role(group,'auth','all')
+            else:
+                _sync_native_perms_for_role(group,'auth',('view',))
 
         self.stdout.write(self.style.SUCCESS("EcoEnergy: roles, módulos y matriz listos"))
         if SYNC_NATIVE_DJANGO_PERMS:

@@ -22,18 +22,26 @@
 
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          {% if perms.Products.view_product %}
           <li class="nav-item">
             <a class="nav-link text-warning" href="{% url 'products_list' %}">Productos</a>
           </li>
+          {% endif %}
+          {% if perms.Products.view_supplier %}
           <li class="nav-item">
             <a class="nav-link text-warning" href="{% url 'supplier_list' %}">Proveedores</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link text-warning" href="{% url 'rawmaterial_list' %}">Materia Prima</a>
-          </li>
+          {% endif %}
+          {% if perms.Products.view_rawmaterial %}
+            <li class="nav-item">
+              <a class="nav-link text-warning" href="{% url 'rawmaterial_list' %}">Materia Prima</a>
+            </li>
+          {% endif %}
+          {% if perms.auth.view_user %}
           <li class="nav-item ">
-            <a class="nav-link text-warning " href="#">Usuarios</a>
+            <a class="nav-link text-warning " href="{% url 'user_list' %}">Usuarios</a>
           </li>
+          {% endif %}
         </ul>
 
         <ul class="navbar-nav mb-2 mb-lg-0">
