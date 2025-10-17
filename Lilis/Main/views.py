@@ -1,12 +1,12 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
-from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PurchaseOrderService
+from Products.views import ProductService, CategoryService, RawMaterialService, RawSupplierService, SupplierService, BatchService, PurchaseOrderService, PurchaseOrderDetailsService
 import json
 from Products.models import Supplier, RawMaterial
-
+import datetime
 # Instancias de las clases CRUD, sino no se pueden usar xd
-product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service,purchase_order_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), PurchaseOrderService(),
+product_service, category_service, raw_material_service, raw_supplier_service, supplier_service, batch_service,purchase_order_service, purchase_order_detail_service = ProductService(), CategoryService(), RawMaterialService(), RawSupplierService(), SupplierService(), BatchService(), PurchaseOrderService(),PurchaseOrderDetailsService()
 
 @login_required
 def dashboard(request):
@@ -231,5 +231,64 @@ def view_purchase_order(request):
 @login_required
 def purchase_order_confirm(request):
     if request.method == 'POST':
-        for key, value in request.POST.items():
-            print(f"{key}: {value}")
+        supplier_info_json = request.POST.get('supplier_info')
+        if not supplier_info_json:
+            return render(request, 'main/purchase_order.html', {'error': 'No se encontró información del proveedor.'})
+        supplier_info = json.loads(supplier_info_json)
+        obj, created = Supplier.objects.get_or_create(
+            rut=supplier_info.get("rut"), 
+            bussiness_name=supplier_info.get("bussiness_name"), 
+            email=supplier_info.get("email"), 
+            phone=supplier_info.get("phone"), 
+            trade_terms=supplier_info.get("trade_terms")
+            )
+        if not created:
+            print("ya existia xd")
+        purchase_data = {
+            'supplier' : obj.id,
+            'user' : request.user.id,
+            'confirmation_date' : request.POST.get('confirmation_date'),
+            'status' : request.POST.get('status'),
+            'total_price' : request.POST.get('total_price')
+        }
+        purchase_success, purchase = purchase_order_service.save_purchase_order(purchase_data)
+        if not purchase_success:
+            print("error al crear el pedido")
+        raw_suppliers = []
+        raw_materials = []
+        today = datetime.date.today()
+        for key in request.POST:
+            if key.startswith('raw_'):
+                try:
+                    data = json.loads(request.POST[key])
+                    data['stock_quantity'] = data['quantity']
+                    success, raw_obj = raw_material_service.save(data)
+                    if success:
+                        raw_materials.append(data)
+                        success2, raw_supplier = raw_supplier_service.create_raw_supplier(obj.id)
+                        if success2:
+                            raw_supplier.fk_raw_material = raw_obj.id
+                            raw_supplier.save()
+                            success3, price = raw_supplier_service.save_prices(
+                                raw_supplier.id,
+                                data['price'],
+                                today,
+                            )
+                            if success3:
+                                purchase_order_details = {
+                                    'purchase_order':purchase.id,
+                                    'price_histories':price.id,
+                                    'quantity': data['quantity'],
+                                    'subtotal' : data['subtotal']
+                                }
+                                success_purchase_detail, purchase_detail = purchase_order_detail_service.save(purchase_order_details)
+                                if success_purchase_detail:
+                                    print("todo ok")
+                        else:
+                            raw_supplier_service.delete(raw_supplier.id)
+                            raw_material_service.delete(raw_obj.id)
+                    else:
+                        print("error al crear la materia prima ", key)
+                except json.JSONDecodeError:
+                    return render(request, 'main/purchase_order.html', {'error': 'Error al procesar los datos del pedido.'})
+        return render(request, 'main/purchase_order.html')

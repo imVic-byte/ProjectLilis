@@ -313,6 +313,13 @@ class PurchaseOrderForm(forms.ModelForm):
             'confirmation_date': 'Fecha de confirmacion',
             'status': 'Estado' 
         }
+        widgets = {
+            'confirmation_date': forms.DateInput(attrs={
+                'type': 'date',
+                'required':True,
+                'placeholder': 'dd/mm/yyyy',
+        })
+        }
     def clean_confirmation_date(self):
         confirmation_date = self.cleaned_data.get('confirmation_date')
         if not confirmation_date:

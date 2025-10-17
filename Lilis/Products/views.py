@@ -4,7 +4,7 @@ from Products.models import (
 )
 from Products.forms import (
     RawMaterialForm, RawSupplierForm, PriceHistoriesForm, BatchForm, ProductForm, 
-    CategoryForm, SupplierForm, PurchaseOrderForm
+    CategoryForm, SupplierForm, PurchaseOrderForm, PurchaseOrderDetailForm
 )
 
 from Main.suppliersAPI import API
@@ -189,6 +189,7 @@ class PurchaseOrderService(CRUD):
 class PurchaseOrderDetailsService(CRUD):
     def __init__(self):
         self.model = PurchaseOrder
+        self.form_class = PurchaseOrderDetailForm
 
 
 
